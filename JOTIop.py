@@ -1,3 +1,4 @@
+#!/usr/bin/python 
 __module_name__ = "Scoutlink JOTI xchat op script" 
 __module_version__ = "1.0" 
 __module_description__ = "A script to assist JOTI ops in managing their channels on Scoutlink."
@@ -83,6 +84,29 @@ class User:
 
     def warn_channel(self, message, channel):
         pass
+
+xchat.command('MENU -p0 ADD $NICK/JOTI')
+
+xchat.command('MENU ADD $NICK/JOTI/Flood')
+
+xchat.command('MENU ADD \"$NICK/JOTI/Flood/Warn\" \"joti flood-warn %s\"')
+xchat.command('MENU ADD \"$NICK/JOTI/Flood/Kick\" \"joti flood-kick %s\"')
+xchat.command('MENU ADD \"$NICK/JOTI/Rude/Warn\" \"joti rude-warn %s\"')
+xchat.command('MENU ADD \"$NICK/JOTI/Rude/Kick\" \"joti rude-Kick %s\"')
+xchat.command('MENU ADD \"$NICK/JOTI/Idle/Warn\" \"joti idle-warn %s\"')
+xchat.command('MENU ADD \"$NICK/JOTI/Idle/Kick\" \"joti idle-kick %s\"')
+xchat.command('MENU ADD \"$NICK/JOTI/Language/Speak\ English (English)\"\
+                                        \"joti english-speak-english %s\"')
+xchat.command('MENU ADD \"$NICK/JOTI/Language/Speak\ English (French)\"\
+                                        \"joti french-speak-english %s\"')
+xchat.command('MENU ADD \"$NICK/JOTI/Language/Speak\ English (Spanish)\"\
+                                        \"joti spanish-speak-english %s\"')
+
+def dispatch(word, word_eol, userdata):
+    print word
+    return xchat.EAT_ALL
+
+xchat.hook_command("joti", dispatch)
 
 def on_text(word, word_eol, userdata):
     print word, word_eol, userdata
