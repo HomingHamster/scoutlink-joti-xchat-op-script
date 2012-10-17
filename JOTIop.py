@@ -5,8 +5,7 @@ __module_description__ = "A script to assist JOTI ops in managing their channels
 
 import xchat
 import ConfigParser
-
-is_live = False
+from datetime import datetime
 
 print "\0034",__module_name__, __module_version__,"has been loaded\003"
 
@@ -35,9 +34,78 @@ print "\0034",__module_name__, __module_version__,"has been loaded\003"
 #   language kicks
 #   automatic half hour ban for all 4 reasons.
 
+class Joti:
+    def __init__(self):
+        self.is_enabled = False
+        self.channels = set()
+
+    def enable(self):
+        self.is_enabled = True
+        #read in config
+        config = ConfigParser.RawConfigParser()
+        config.read('config.conf')
+        #set menus
+        self.setup_nick_menu()
+        #create list of channels
+        #set hooks for joti/join/part/messages
+        xchat.hook_command("joti", self.dispatch)
+        xchat.hook_print('Channel Message', on_text)
+        xchat.hook_print('Join', on_join)
+        xchat.hook_print('Part', on_part)
+        #xchat.hook_print('Change Nick', on_change_nick)
+        #start writing log
+
+    def disable(self):
+        self.is_enabled = False
+        #reverse enable
+
+    def setup_nick_menu(self):
+        xchat.command('MENU -p0 ADD $NICK/JOTI')
+        xchat.command('MENU ADD $NICK/JOTI/Flood')
+        xchat.command('MENU ADD \"$NICK/JOTI/Flood/Warn\" \"joti flood-warn %s\"')
+        xchat.command('MENU ADD \"$NICK/JOTI/Flood/Kick\" \"joti flood-kick %s\"')
+        xchat.command('MENU ADD $NICK/JOTI/Rude')
+        xchat.command('MENU ADD \"$NICK/JOTI/Rude/Warn\" \"joti rude-warn %s\"')
+        xchat.command('MENU ADD \"$NICK/JOTI/Rude/Kick\" \"joti rude-Kick %s\"')
+        xchat.command('MENU ADD $NICK/JOTI/Idle')
+        xchat.command('MENU ADD \"$NICK/JOTI/Idle/Warn\" \"joti idle-warn %s\"')
+        xchat.command('MENU ADD \"$NICK/JOTI/Idle/Kick\" \"joti idle-kick %s\"')
+        xchat.command('MENU ADD $NICK/JOTI/Language')
+        xchat.command('MENU ADD \"$NICK/JOTI/Language/Speak\ English (English)\"\
+                                                \"joti english-speak-english %s\"')
+        xchat.command('MENU ADD \"$NICK/JOTI/Language/Speak\ English (French)\"\
+                                                \"joti french-speak-english %s\"')
+        xchat.command('MENU ADD \"$NICK/JOTI/Language/Speak\ English (Spanish)\"\
+                                                \"joti spanish-speak-english %s\"')
+
+    def dispatch(self, word, word_eol, userdata):
+        print word
+        return xchat.EAT_ALL
+
+    def on_text(self, word, word_eol, userdata):
+        print word, word_eol, userdata
+        dest = xchat.get_context().get_info("channel")
+        
+    def on_join(self, word, word_eol, userdata):
+        print word, word_eol, userdata
+
+    def on_part(self, word, word_eol, userdata):
+        print word, word_eol, userdata
+
+class Log:
+    def __init__(self, logfile_name):
+        self.logfile_name = logfile_name
+
+    def open_log(self, logfile_name)
+        self.logfile = open(logfile, "a")
+        self.logfile.write(str(datetime.utcnow) + " >> LOG OPENED\r\n")
+
+    def write_entry(self, text):
+        self.logfile.write(str(datetime.utcnow) + " >> " + text + "\r\n")
+
 '''
 For every channel joined there is a channel class,
-when enabled this will hold all od the users and 
+when enabled this will hold all of the users and 
 ban information
 '''
 class Channel:
@@ -45,6 +113,7 @@ class Channel:
         self.name = name                #stores chanel name.
         self.users = set()              #stores a User object for everyone in the channel.
         self.banned_users = set()       #a set of CURRENTLY BANNED users.
+        self.auto_enabled               #enable automatic warnings.
         #self.ops = Op[]
         #self.user_limit = user_limit
 
@@ -85,40 +154,17 @@ class User:
     def warn_channel(self, message, channel):
         pass
 
-xchat.command('MENU -p0 ADD $NICK/JOTI')
+    def on_text(word, word_eol, userdata):
+        print word, word_eol, userdata
+        dest = xchat.get_context().get_info("channel")
+        
+    def on_join(word, word_eol, userdata):
+        print word, word_eol, userdata
 
-xchat.command('MENU ADD $NICK/JOTI/Flood')
+    def on_part(word, word_eol, userdata):
+        print word, word_eol, userdata
 
-xchat.command('MENU ADD \"$NICK/JOTI/Flood/Warn\" \"joti flood-warn %s\"')
-xchat.command('MENU ADD \"$NICK/JOTI/Flood/Kick\" \"joti flood-kick %s\"')
-xchat.command('MENU ADD \"$NICK/JOTI/Rude/Warn\" \"joti rude-warn %s\"')
-xchat.command('MENU ADD \"$NICK/JOTI/Rude/Kick\" \"joti rude-Kick %s\"')
-xchat.command('MENU ADD \"$NICK/JOTI/Idle/Warn\" \"joti idle-warn %s\"')
-xchat.command('MENU ADD \"$NICK/JOTI/Idle/Kick\" \"joti idle-kick %s\"')
-xchat.command('MENU ADD \"$NICK/JOTI/Language/Speak\ English (English)\"\
-                                        \"joti english-speak-english %s\"')
-xchat.command('MENU ADD \"$NICK/JOTI/Language/Speak\ English (French)\"\
-                                        \"joti french-speak-english %s\"')
-xchat.command('MENU ADD \"$NICK/JOTI/Language/Speak\ English (Spanish)\"\
-                                        \"joti spanish-speak-english %s\"')
-
-def dispatch(word, word_eol, userdata):
-    print word
-    return xchat.EAT_ALL
-
-xchat.hook_command("joti", dispatch)
-
-def on_text(word, word_eol, userdata):
-    print word, word_eol, userdata
-    dest = xchat.get_context().get_info("channel")
-    
-def on_join(word, word_eol, userdata):
-    print word, word_eol, userdata
-
-def on_part(word, word_eol, userdata):
-    print word, word_eol, userdata
-
-xchat.hook_print('Channel Message', on_text)
-xchat.hook_print('Join', on_join)
-xchat.hook_print('Part', on_part)
-#xchat.hook_print('Change Nick', on_change_nick)
+    xchat.hook_print('Channel Message', on_text)
+    xchat.hook_print('Join', on_join)
+    xchat.hook_print('Part', on_part)
+    #xchat.hook_print('Change Nick', on_change_nick)
